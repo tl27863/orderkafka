@@ -1,31 +1,43 @@
 import express, { Express, Request, Response } from "express";
-import { Pool } from "pg";
+//import 'reflect-metadata'
+import { apiDataSource } from "./database";
 
 const app: Express = express();
 const port = 3000;
 
-app.use(express.json());
+async function startAPI() {
+  try {
+    await apiDataSource.initialize();
+    console.log("Database initialized!");
 
-app.post("api/inventory", (req: Request, res: Response) => {
-  const newInventory = req.body;
+    app.use(express.json());
 
-  //save or update postgress database
-});
+    app.post("api/inventory", (req: Request, res: Response) => {
+      const newInventory = req.body;
 
-app.post("api/orders", (req: Request, res: Response) => {
-  const newOrder = req.body;
+      //save or update postgress database
+    });
 
-  //save or update postgress database
-});
+    app.post("api/orders", (req: Request, res: Response) => {
+      const newOrder = req.body;
 
-app.get("api/inventory", (req: Request, res: Response) => {
-  //get data from db
-  res.status(200);
-});
+      //save or update postgress database
+    });
 
-app.get("api/orders", (req: Request, res: Response) => {
-  //get data from db
-  res.status(200);
-});
+    app.get("api/inventory", (req: Request, res: Response) => {
+      //get data from db
+      res.status(200);
+    });
 
-app.listen(port, () => console.log(`API Up on port ${port}`));
+    app.get("api/orders", (req: Request, res: Response) => {
+      //get data from db
+      res.status(200);
+    });
+
+    app.listen(port, () => console.log(`API Up on port ${port}`));
+  } catch (e) {
+    console.error("Error: ", e);
+  }
+}
+
+startAPI();
