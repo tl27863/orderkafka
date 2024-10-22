@@ -1,0 +1,37 @@
+-- Orders table
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    customer_id UUID NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    amount DECIMAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Order Items table
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    product_id UUID NOT NULL,
+    quantity INTEGER NOT NULL,
+    price DECIMAL NOT NULL
+);
+
+-- Inventory table
+CREATE TABLE inventory (
+    id SERIAL PRIMARY KEY,
+    product_id UUID NOT NULL,
+    quantity INTEGER NOT NULL,
+    reserved_quantity INTEGER DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Payment transactions table
+CREATE TABLE payment_transactions (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    amount DECIMAL NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    transaction_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
