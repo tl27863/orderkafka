@@ -33,9 +33,9 @@ router.get("/stock", async (req: Request, res: Response) => {
     const result = await inventoryService.getInventory(productId);
     if (result.success) {
       res.status(200).send(result.data);
+    } else {
+      res.status(200).send({ message: "No data" });
     }
-
-    res.status(200).send({ message: "No data" });
   }
 });
 
