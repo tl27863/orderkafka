@@ -21,3 +21,5 @@ async function startAPI() {
 }
 
 startAPI();
+
+export default app;

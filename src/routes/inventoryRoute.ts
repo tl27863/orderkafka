@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response } from "express";
 import { InventoryService } from "../services/inventoryService";
 
 const inventoryService = new InventoryService();
@@ -10,14 +10,12 @@ router.post(
     const { productId, quantity } = req.params;
     const qty = parseInt(quantity, 10);
 
-    // Check if quantity is a valid number
     if (isNaN(qty)) {
       res
         .status(400)
         .send({ message: "Invalid quantity. Please provide a valid integer." });
     }
 
-    // Check if it's a whole number
     if (!Number.isInteger(qty)) {
       res.status(400).send({ message: "Quantity must be a whole number." });
     }
