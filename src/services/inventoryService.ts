@@ -1,5 +1,11 @@
-import { apiDataSource } from "./database";
-import { Inventory } from "./entities";
+import { apiDataSource } from "../database";
+import { Inventory } from "../entities";
+
+interface ServiceResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
 
 export class InventoryService {
   private inventoryRepository = apiDataSource.getRepository(Inventory);
@@ -7,7 +13,7 @@ export class InventoryService {
   async createOrUpdateInventory(
     productId: string,
     quantity: number,
-  ): Promise<Inventory> {
+  ): Promise<ServiceResponse<void>> {
     let inventory = await this.inventoryRepository.findOne({
       where: {
         product_id: productId,
@@ -25,30 +31,34 @@ export class InventoryService {
       });
     }
 
-    return await this.inventoryRepository.save(inventory);
+    await this.inventoryRepository.save(inventory);
+    return { success: true };
   }
 
-  async getInventory(productId: string): Promise<Inventory | null> {
-    return await this.inventoryRepository.findOne({
+  async getInventory(productId: string): Promise<ServiceResponse<Inventory>> {
+    const res = await this.inventoryRepository.findOne({
       where: { product_id: productId },
     });
+
+    if (res == null) return { success: false };
+    return { success: true, data: res };
   }
 
   async reserveInventory(
     productId: string,
     quantity: number,
-  ): Promise<boolean> {
+  ): Promise<ServiceResponse<Inventory>> {
     const inventory = await this.getInventory(productId);
     if (
-      !inventory ||
-      inventory.quantity - inventory.reserved_quantity < quantity
+      !inventory.success ||
+      inventory.data!.quantity - inventory.data!.reserved_quantity < quantity
     ) {
-      return false;
+      return { success: false };
     }
 
-    inventory.reserved_quantity += quantity;
-    await this.inventoryRepository.save(inventory);
-    return true;
+    inventory.data!.reserved_quantity += quantity;
+    await this.inventoryRepository.save(inventory.data!);
+    return { success: true };
   }
 
   // async releaseReservedInventory(
@@ -62,12 +72,19 @@ export class InventoryService {
   //   }
   // }
 
-  async commitInventory(productId: string, quantity: number): Promise<void> {
+  async commitInventory(
+    productId: string,
+    quantity: number,
+  ): Promise<ServiceResponse<void>> {
     const inventory = await this.getInventory(productId);
-    if (inventory) {
-      inventory.quantity -= quantity;
-      inventory.reserved_quantity -= quantity;
-      await this.inventoryRepository.save(inventory);
+    if (inventory.success) {
+      inventory.data!.quantity -= quantity;
+      inventory.data!.reserved_quantity -= quantity;
+      await this.inventoryRepository.save(inventory.data!);
+
+      return { success: true };
     }
+
+    return { success: false };
   }
 }
