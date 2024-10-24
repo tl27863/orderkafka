@@ -61,16 +61,19 @@ export class InventoryService {
     return { success: true };
   }
 
-  // async releaseReservedInventory(
-  //   productId: string,
-  //   quantity: number,
-  // ): Promise<void> {
-  //   const inventory = await this.getInventory(productId);
-  //   if (inventory) {
-  //     inventory.reserved_quantity = inventory.reserved_quantity - quantity;
-  //     await this.inventoryRepository.save(inventory);
-  //   }
-  // }
+  async releaseReservedInventory(
+    productId: string,
+    quantity: number,
+  ): Promise<ServiceResponse<void>> {
+    const inventory = await this.getInventory(productId);
+    if (inventory) {
+      inventory.data!.reserved_quantity -= quantity;
+      await this.inventoryRepository.save(inventory.data!);
+      return { success: true };
+    } else {
+      return { success: false };
+    }
+  }
 
   async commitInventory(
     productId: string,
