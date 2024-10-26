@@ -3,6 +3,13 @@ import app, { initializeAPI } from "../src/app";
 import crypto from "crypto";
 import { deleteAllData } from "./testService";
 import { apiDataSource } from "../src/database";
+import {
+  INVENTORY_ONE,
+  ORDERDATA_ONE,
+  ORDERSTATUS,
+  PAYMENTSTATUS,
+  APISTATUS,
+} from "./testData";
 
 beforeAll(async () => {
   await initializeAPI();
@@ -16,36 +23,36 @@ describe("/api/inventory", () => {
   it("Input inventory to db and output it", async () => {
     await deleteAllData();
 
-    const uuid = crypto.randomUUID();
     const createInventory = await request(app)
-      .post(`/api/inventory/update/${uuid}/1`)
+      .post(
+        `/api/inventory/update/${INVENTORY_ONE.PRODUCTID}/${INVENTORY_ONE.QUANTITY}`,
+      )
       .set("Accept", "application/json");
 
-    expect(createInventory.statusCode).toBe(200);
+    expect(createInventory.statusCode).toBe(APISTATUS.OK);
 
     const getInventory = await request(app)
-      .get(`/api/inventory/stock?productId=${uuid}`)
+      .get(`/api/inventory/stock?productId=${INVENTORY_ONE.PRODUCTID}`)
       .set("Accept", "application/json");
 
-    expect(getInventory.statusCode).toBe(200);
-    expect(getInventory.body.product_id).toBe(uuid);
-    expect(getInventory.body.quantity).toBe(1);
+    expect(getInventory.statusCode).toBe(APISTATUS.OK);
+    expect(getInventory.body.product_id).toBe(INVENTORY_ONE.PRODUCTID);
+    expect(getInventory.body.quantity).toBe(INVENTORY_ONE.QUANTITY);
   });
   it("Reject non-integer quantity", async () => {
     await deleteAllData();
 
-    const uuid = crypto.randomUUID();
     const createNanInventory = await request(app)
-      .post(`/api/inventory/update/${uuid}/notanumber`)
+      .post(`/api/inventory/update/${INVENTORY_ONE.PRODUCTID}/notanumber`)
       .set("Accept", "application/json");
 
-    expect(createNanInventory.statusCode).toBe(400);
+    expect(createNanInventory.statusCode).toBe(APISTATUS.ERROR);
 
     const createDecimalInventory = await request(app)
-      .post(`/api/inventory/update/${uuid}/3.14`)
+      .post(`/api/inventory/update/${INVENTORY_ONE.PRODUCTID}/3.14`)
       .set("Accept", "application/json");
 
-    expect(createDecimalInventory.statusCode).toBe(400);
+    expect(createDecimalInventory.statusCode).toBe(APISTATUS.ERROR);
   });
   it("Reject invalid uuid", async () => {
     await deleteAllData();
@@ -54,13 +61,13 @@ describe("/api/inventory", () => {
       .post(`/api/inventory/update/notauuid/37`)
       .set("Accept", "application/json");
 
-    expect(createUuidInventory.statusCode).toBe(400);
+    expect(createUuidInventory.statusCode).toBe(APISTATUS.ERROR);
 
     const getUuidInventory = await request(app)
       .get(`/api/inventory/stock?productId=notauuid`)
       .set("Accept", "application/json");
 
-    expect(getUuidInventory.statusCode).toBe(400);
+    expect(getUuidInventory.statusCode).toBe(APISTATUS.ERROR);
   });
 });
 
@@ -68,40 +75,25 @@ describe("/api/order", () => {
   it("Input order to db and output it", async () => {
     await deleteAllData();
 
-    const customerUuid = crypto.randomUUID();
-    const productUuid = crypto.randomUUID();
-    const itemsPrice = 11;
-    const itemsQuantity = 4;
-    const order = {
-      customer_id: customerUuid,
-      items: [
-        {
-          product_id: productUuid,
-          quantity: itemsQuantity,
-          price: itemsPrice,
-        },
-      ],
-    };
-
     await request(app)
-      .post(`/api/inventory/update/${productUuid}/5`)
+      .post(`/api/inventory/update/${ORDERDATA_ONE.INVENTORY.product_id}/5`)
       .set("Accept", "application/json");
 
     const createOrder = await request(app)
       .post(`/api/order/create`)
       .set("Accept", "application/json")
-      .send(order);
+      .send(ORDERDATA_ONE.ORDER);
 
-    expect(createOrder.statusCode).toBe(200);
+    expect(createOrder.statusCode).toBe(APISTATUS.OK);
 
     const getOrder = await request(app)
       .get(`/api/order/${createOrder.body.orderId}`)
       .set("Accept", "application/json");
 
-    expect(getOrder.statusCode).toBe(200);
-    expect(Number(getOrder.body.amount)).toBe(itemsPrice * itemsQuantity);
-    expect(getOrder.body.customer_id).toBe(customerUuid);
-    expect(getOrder.body.status).toBe("PENDING");
+    expect(getOrder.statusCode).toBe(APISTATUS.OK);
+    expect(Number(getOrder.body.amount)).toBe(ORDERDATA_ONE.AMOUNT);
+    expect(getOrder.body.customer_id).toBe(ORDERDATA_ONE.ORDER.customer_id);
+    expect(getOrder.body.status).toBe(ORDERSTATUS.PENDING);
     expect(getOrder.body.orderItems).toBeDefined();
     expect(Array.isArray(getOrder.body.orderItems)).toBeTruthy();
     expect(getOrder.body.orderItems.length).toBe(1);
@@ -109,16 +101,22 @@ describe("/api/order", () => {
       createOrder.body.orderId,
     );
     expect(Number(getOrder.body.paymentTransaction.amount)).toBe(
-      itemsPrice * itemsQuantity,
+      ORDERDATA_ONE.AMOUNT,
     );
-    expect(getOrder.body.paymentTransaction.status).toBe("AWAITING PAYMENT");
+    expect(getOrder.body.paymentTransaction.status).toBe(
+      PAYMENTSTATUS.AWAITINGPAYMENT,
+    );
 
     const checkInventory = await request(app)
-      .get(`/api/inventory/stock?productId=${productUuid}`)
+      .get(
+        `/api/inventory/stock?productId=${ORDERDATA_ONE.INVENTORY.product_id}`,
+      )
       .set("Accept", "application/json");
 
-    expect(checkInventory.status).toBe(200);
-    expect(checkInventory.body.quantity).toBe(5);
-    expect(checkInventory.body.reserved_quantity).toBe(4);
+    expect(checkInventory.status).toBe(APISTATUS.OK);
+    expect(checkInventory.body.quantity).toBe(ORDERDATA_ONE.INVENTORY.quantity);
+    expect(checkInventory.body.reserved_quantity).toBe(
+      ORDERDATA_ONE.ORDER.items[0].quantity,
+    );
   });
 });
