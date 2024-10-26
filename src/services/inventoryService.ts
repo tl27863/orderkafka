@@ -47,7 +47,7 @@ export class InventoryService {
   async reserveInventory(
     productId: string,
     quantity: number,
-  ): Promise<ServiceResponse<Inventory>> {
+  ): Promise<ServiceResponse<void>> {
     const inventory = await this.getInventory(productId);
     if (
       !inventory.success ||

@@ -23,10 +23,12 @@ interface ServiceResponse<T> {
 export class OrderService {
   private orderRepository = apiDataSource.getRepository(Order);
   private orderItemRepository = apiDataSource.getRepository(OrderItem);
-  private inventoryService: InventoryService;
-  private paymentService: PaymentService;
+  private inventoryService = new InventoryService();
+  private paymentService = new PaymentService();
 
-  async createOrder(orderData: CreateOrderDTO): Promise<ServiceResponse<void>> {
+  async createOrder(
+    orderData: CreateOrderDTO,
+  ): Promise<ServiceResponse<Number>> {
     try {
       const queryRunner = apiDataSource.createQueryRunner();
       await queryRunner.connect();
@@ -58,7 +60,6 @@ export class OrderService {
           customer_id: orderData.customer_id,
           status: "PENDING",
           amount: totalAmount,
-          orderItems: [],
         });
 
         const savedOrder = await this.orderRepository.save(order);
@@ -81,6 +82,7 @@ export class OrderService {
         await queryRunner.commitTransaction();
         return {
           success: true,
+          data: savedOrder.id,
         };
       } catch (error) {
         await queryRunner.rollbackTransaction();
@@ -101,7 +103,7 @@ export class OrderService {
     try {
       const order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["orderItems", "paymentTransactions"],
+        relations: ["orderItems", "paymentTransaction"],
       });
 
       if (!order) {
