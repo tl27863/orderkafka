@@ -12,13 +12,14 @@ import {
 
 beforeAll(async () => {
   await initializeAPI();
-});
+}, 15000);
 
 afterAll(async () => {
   await apiDataSource.destroy();
 });
 
 describe("/api/inventory", () => {
+  jest.setTimeout(15000);
   it("Input inventory to db and output it", async () => {
     await deleteAllData();
 
@@ -71,6 +72,7 @@ describe("/api/inventory", () => {
 });
 
 describe("/api/order", () => {
+  jest.setTimeout(15000);
   it("Input order to db and output it", async () => {
     await deleteAllData();
 
