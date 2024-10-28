@@ -130,9 +130,9 @@ export class OrderService {
     status: string,
   ): Promise<ServiceResponse<Order>> {
     try {
-      const order = await this.orderRepository.findOne({
+      let order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["orderItems"],
+        relations: ["orderItems", "paymentTransaction"],
       });
 
       if (!order) {
@@ -152,6 +152,11 @@ export class OrderService {
             item.quantity,
           );
         }
+
+        await this.paymentService.updatePaymentStatus(
+          order.paymentTransaction.transaction_id,
+          "PAID",
+        );
       }
 
       // Save the updated order
@@ -174,9 +179,9 @@ export class OrderService {
 
   async cancelOrder(orderId: number): Promise<ServiceResponse<void>> {
     try {
-      const order = await this.orderRepository.findOne({
+      let order = await this.orderRepository.findOne({
         where: { id: orderId },
-        relations: ["orderItems"],
+        relations: ["orderItems", "paymentTransaction"],
       });
 
       if (!order) {
@@ -201,6 +206,10 @@ export class OrderService {
       }
 
       order.status = "CANCELLED";
+      await this.paymentService.updatePaymentStatus(
+        order.paymentTransaction.transaction_id,
+        order.status,
+      );
       await this.orderRepository.save(order);
 
       return {

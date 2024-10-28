@@ -101,14 +101,14 @@ router.put("/:orderId", async (req: Request, res: Response) => {
       if (result.success) {
         res.status(200).json(result.data);
       } else {
-        throw new Error("Failed to update status");
+        throw new Error(result.error);
       }
     } else {
       const result = await orderService.cancelOrder(id);
       if (result.success) {
         res.status(200).json(result.data);
       } else {
-        throw new Error("Failed to update status");
+        throw new Error(result.error);
       }
     }
   } catch (error) {

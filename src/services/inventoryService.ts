@@ -48,7 +48,7 @@ export class InventoryService {
     productId: string,
     quantity: number,
   ): Promise<ServiceResponse<void>> {
-    const inventory = await this.getInventory(productId);
+    let inventory = await this.getInventory(productId);
     if (
       !inventory.success ||
       inventory.data!.quantity - inventory.data!.reserved_quantity < quantity
@@ -65,7 +65,7 @@ export class InventoryService {
     productId: string,
     quantity: number,
   ): Promise<ServiceResponse<void>> {
-    const inventory = await this.getInventory(productId);
+    let inventory = await this.getInventory(productId);
     if (inventory) {
       inventory.data!.reserved_quantity -= quantity;
       await this.inventoryRepository.save(inventory.data!);
@@ -79,7 +79,7 @@ export class InventoryService {
     productId: string,
     quantity: number,
   ): Promise<ServiceResponse<void>> {
-    const inventory = await this.getInventory(productId);
+    let inventory = await this.getInventory(productId);
     if (inventory.success) {
       inventory.data!.quantity -= quantity;
       inventory.data!.reserved_quantity -= quantity;

@@ -1,6 +1,5 @@
 import request from "supertest";
 import app, { initializeAPI } from "../src/app";
-import crypto from "crypto";
 import { deleteAllData } from "./testService";
 import { apiDataSource } from "../src/database";
 import {
@@ -76,7 +75,9 @@ describe("/api/order", () => {
     await deleteAllData();
 
     await request(app)
-      .post(`/api/inventory/update/${ORDERDATA_ONE.INVENTORY.product_id}/5`)
+      .post(
+        `/api/inventory/update/${ORDERDATA_ONE.INVENTORY.product_id}/${ORDERDATA_ONE.INVENTORY.quantity}`,
+      )
       .set("Accept", "application/json");
 
     const createOrder = await request(app)
@@ -118,5 +119,74 @@ describe("/api/order", () => {
     expect(checkInventory.body.reserved_quantity).toBe(
       ORDERDATA_ONE.ORDER.items[0].quantity,
     );
+  });
+  it("Confirm Order", async () => {
+    const updateOrderStatus = await request(app)
+      .put(`/api/order/1?status=${ORDERSTATUS.CONFIRMED}`)
+      .set("Accept", "application/json");
+
+    expect(updateOrderStatus.status).toBe(APISTATUS.OK);
+
+    const getOrder = await request(app)
+      .get(`/api/order/1`)
+      .set("Accept", "application/json");
+
+    expect(getOrder.status).toBe(APISTATUS.OK);
+    expect(getOrder.body.status).toBe(ORDERSTATUS.CONFIRMED);
+    expect(getOrder.body.paymentTransaction.status).toBe(PAYMENTSTATUS.PAID);
+
+    const checkInventory = await request(app)
+      .get(
+        `/api/inventory/stock?productId=${ORDERDATA_ONE.INVENTORY.product_id}`,
+      )
+      .set("Accept", "application/json");
+
+    expect(checkInventory.status).toBe(APISTATUS.OK);
+    expect(checkInventory.body.quantity).toBe(
+      ORDERDATA_ONE.INVENTORY.quantity - ORDERDATA_ONE.ORDER.items[0].quantity,
+    );
+    expect(checkInventory.body.reserved_quantity).toBe(0);
+  });
+  it("Cancel Order", async () => {
+    await deleteAllData();
+
+    await request(app)
+      .post(
+        `/api/inventory/update/${ORDERDATA_ONE.INVENTORY.product_id}/${ORDERDATA_ONE.INVENTORY.quantity}`,
+      )
+      .set("Accept", "application/json");
+
+    const createOrder = await request(app)
+      .post(`/api/order/create`)
+      .set("Accept", "application/json")
+      .send(ORDERDATA_ONE.ORDER);
+
+    expect(createOrder.statusCode).toBe(APISTATUS.OK);
+
+    const updateOrderStatus = await request(app)
+      .put(`/api/order/1?status=${ORDERSTATUS.CANCELLED}`)
+      .set("Accept", "application/json");
+
+    expect(updateOrderStatus.status).toBe(APISTATUS.OK);
+
+    const getOrder = await request(app)
+      .get(`/api/order/1`)
+      .set("Accept", "application/json");
+
+    expect(getOrder.status).toBe(APISTATUS.OK);
+    expect(getOrder.body.status).toBe(ORDERSTATUS.CANCELLED);
+    expect(getOrder.body.paymentTransaction.status).toBe(
+      PAYMENTSTATUS.CANCELLED,
+    );
+
+    const checkInventory = await request(app)
+      .get(
+        `/api/inventory/stock?productId=${ORDERDATA_ONE.INVENTORY.product_id}`,
+      )
+      .set("Accept", "application/json");
+
+    expect(checkInventory.status).toBe(APISTATUS.OK);
+    expect(checkInventory.body.quantity).toBe(ORDERDATA_ONE.INVENTORY.quantity);
+    expect(checkInventory.body.reserved_quantity).toBe(0);
   });
 });
