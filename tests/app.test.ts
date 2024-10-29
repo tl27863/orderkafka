@@ -9,13 +9,17 @@ import {
   PAYMENTSTATUS,
   APISTATUS,
 } from "./testData";
+import { KafkaService } from "../src/kafka";
+
+let kafkaService: KafkaService;
 
 beforeAll(async () => {
-  await initializeAPI();
+  kafkaService = await initializeAPI();
 }, 15000);
 
 afterAll(async () => {
   await apiDataSource.destroy();
+  await kafkaService.disconnect();
 });
 
 describe("/api/inventory", () => {

@@ -47,9 +47,10 @@ router.post("/create", async (req: Request, res: Response) => {
 
     const result = await orderService.createOrder(orderData);
     if (result.success) {
-      res
-        .status(200)
-        .json({ orderId: result.data, message: "Order created successfully" });
+      res.status(200).json({
+        orderId: result.data,
+        message: "Order created successfully",
+      });
     } else {
       throw new Error("Failed to create order");
     }
