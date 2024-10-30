@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { apiDataSource } from "./database";
 import invRoute from "./routes/inventoryRoute";
 import orderRoute from "./routes/orderRoute";
@@ -15,6 +16,7 @@ export async function initializeAPI() {
     await apiDataSource.initialize();
     console.log("Database initialized!");
 
+    app.use(cors());
     app.use(express.json());
     app.use(kafkaLogger(kafkaService));
     app.use("/api/inventory", invRoute);
