@@ -194,5 +194,6 @@ describe("/api/order", () => {
     expect(checkInventory.status).toBe(APISTATUS.OK);
     expect(checkInventory.body.quantity).toBe(ORDERDATA_ONE.INVENTORY.quantity);
     expect(checkInventory.body.reserved_quantity).toBe(0);
+    await deleteAllData();
   });
 });
